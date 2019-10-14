@@ -6,10 +6,9 @@
 </head>
 
     
-<script id="shader-vs" type="x-shader/x-vertex">
+<!-- <script id="shader-vs" type="x-shader/x-vertex">
     attribute vec3 aVertexNormal;
     attribute vec3 aVertexPosition;
-   
     uniform mat4 uMVMatrix;
     uniform mat4 uPMatrix;
     uniform mat3 uNMatrix;
@@ -23,7 +22,6 @@
     uniform vec3 uKDiffuse;
     uniform vec3 uKSpecular;
     uniform float uShininess;
-    
     varying vec4 vColor;
 
     void main(void) {
@@ -70,7 +68,7 @@
     void main(void) {
             gl_FragColor = vColor;
      }
-    </script>
+    </script> -->
      
  <script id="shader-phong-phong-vs" type="x-shader/x-vertex">
     attribute vec3 aVertexNormal;
@@ -84,6 +82,11 @@
     uniform mat4 uPMatrix;
     uniform mat3 uNMatrix;
 
+    uniform vec4 uHeightInterval;
+    uniform vec3 uTopColor;
+    uniform vec3 uMidColor;
+    uniform vec3 uBaseColor;
+    uniform vec3 uBotColor;
 
     void main(void) {
         // Get the vertex position in eye coordinates
@@ -93,20 +96,19 @@
         // Calculate the normal
         vNormal = normalize(uNMatrix * aVertexNormal);
         
-        
         // Calculates the color based on height
-        if (aVertexPosition.z > 0.05) {
+        if (aVertexPosition.z > uHeightInterval[0]) {
             // snow color
-            colorByHeight = vec3(255.0/255.0, 250.0/255.0, 250.0/255.0); 
-        } else if (aVertexPosition.z > -0.05){
+            colorByHeight = uTopColor;
+        } else if (aVertexPosition.z > uHeightInterval[1]){
             // earth tone brown
-            colorByHeight = vec3(135.0/255.0, 67.0/255.0, 23.0/255.0);
-        } else if (aVertexPosition.z > -0.1) {
+            colorByHeight = uMidColor;
+        } else if (aVertexPosition.z > uHeightInterval[2]) {
             // green vegetation color
-            colorByHeight = vec3(44.0/255.0, 176.0/255.0, 55.0/255.0);
+            colorByHeight = uBaseColor;
         } else {
             // ocean blue waters
-            colorByHeight = vec3(0.0/255.0, 151.0/255.0, 241.0/255.0);
+            colorByHeight = uBotColor;
         }
 
         gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
@@ -118,7 +120,7 @@
     varying vec3 vNormal;
     varying vec3 vPosition;
     varying vec3 colorByHeight;
-
+    
     uniform vec3 uLightPosition;
     uniform vec3 uAmbientLightColor;
     uniform vec3 uDiffuseLightColor;
@@ -175,7 +177,23 @@
          <input type="radio" name="primitive" id="polygon" id="polygon" value="polygon" checked> Polygon
          <input type="radio" name="primitive" id="wirepoly" value="wirepoly" > Polygon with Edges  
         </fieldset>
-        </form>
+    </form>
+    <form id="camera_position_input_form">
+        <fieldset>
+            <legend>Camera Position Parameters</legend>
+         <input type="range" id="cameraXPos" value="0" min = "-1" max = "1" step="0.1"> X
+         <input type="range" id="cameraYPos" value="0" min = "-1" max = "1" step="0.1"> Y
+         <input type="range" id="cameraZPos" value="0" min = "-1" max = "1" step="0.1"> Z
+        </fieldset>
+    </form>
+    <form id="camera_direction_input_form">
+        <fieldset>
+            <legend>Camera Direction Parameters</legend>
+         <input type="range" id="xDir" value="0" min = "-1" max = "1" step="0.1"> X
+         <input type="range" id="yDir" value="0" min = "-1" max = "1" step="0.1"> Y
+         <input type="range" id="zDir" value="0" min = "-1" max = "1" step="0.1"> Z  
+        </fieldset>
+    </form>
 </body>
 
 </html>

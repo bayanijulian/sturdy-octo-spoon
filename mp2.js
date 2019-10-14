@@ -241,6 +241,12 @@ function setupShaders() {
   shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
   gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
 
+  shaderProgram.uniformHeightInterval= gl.getUniformLocation(shaderProgram, "uHeightInterval");
+  shaderProgram.uniformTopColor = gl.getUniformLocation(shaderProgram, "uTopColor");
+  shaderProgram.uniformMidColor = gl.getUniformLocation(shaderProgram, "uMidColor");
+  shaderProgram.uniformBaseColor = gl.getUniformLocation(shaderProgram, "uBaseColor");
+  shaderProgram.uniformBotColor = gl.getUniformLocation(shaderProgram, "uBotColor");
+
   shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
   shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
   shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
@@ -283,8 +289,46 @@ function setLightUniforms(loc,a,d,s) {
   gl.uniform3fv(shaderProgram.uniformDiffuseLightColorLoc, d);
   gl.uniform3fv(shaderProgram.uniformSpecularLightColorLoc, s);
 }
+//-------------------------------------------------------------------------
+/**
+ * Sends the min/max z coordinate to the shader for coloring the terrain by
+ * intervals.
+ */
+function setHeightIntervalUniforms() {
+  // Set the height interval
 
-//----------------------------------------------------------------------------------
+  let skyColor = [255.0/255.0, 250.0/255.0, 250.0/255.0];
+  gl.uniform3fv(shaderProgram.uniformTopColor, new Float32Array(skyColor));
+
+  let earthColor = [135.0/255.0, 67.0/255.0, 23.0/255.0];
+  gl.uniform3fv(shaderProgram.uniformMidColor, new Float32Array(earthColor));
+
+  let vegetationColor = [44.0/255.0, 176.0/255.0, 55.0/255.0];
+  gl.uniform3fv(shaderProgram.uniformBaseColor, new Float32Array(vegetationColor));
+
+  let oceanColor = [0.0/255.0, 151.0/255.0, 241.0/255.0];
+  gl.uniform3fv(shaderProgram.uniformBotColor, new Float32Array(oceanColor));
+  
+  let heightInterval = vec2.create();
+  myTerrain.getHeightInterval(heightInterval);
+  let minZ = heightInterval[0];
+  let maxZ = heightInterval[1];
+  let intervalLength = Math.abs(minZ) + Math.abs(maxZ);
+  let interval_30 = intervalLength * 0.3;
+  let interval_20 = intervalLength * 0.2;
+
+  let topStartZ = maxZ - interval_20; // top color is 20 percent
+  let midStartZ = topStartZ - interval_30; // mid color is 30 percent 
+  let baseStartZ = midStartZ - interval_30; // base color is 30 percent
+  let botStartZ = minZ;
+
+  let intervals = vec4.fromValues(topStartZ, midStartZ, baseStartZ, botStartZ);
+  gl.uniform4fv(shaderProgram.uniformHeightInterval, new Float32Array(intervals));
+
+}
+
+
+//-------------------------------------------------------------------------
 /**
  * Populate buffers with data
  */
@@ -322,6 +366,7 @@ function draw() {
     mat4.rotateX(mvMatrix, mvMatrix, degToRad(-75));
     setMatrixUniforms();
     setLightUniforms(lightPosition,lAmbient,lDiffuse,lSpecular);
+    setHeightIntervalUniforms();
     
     if ((document.getElementById("polygon").checked) || (document.getElementById("wirepoly").checked))
     { 

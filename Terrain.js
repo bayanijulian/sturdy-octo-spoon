@@ -163,6 +163,27 @@ class Terrain{
         pos[2] += delta;
         this.setVertex(pos, i);
     }
+    /**
+     * Returns the highest and lowest z coordinates/height as (min,max)
+     * @param {Object} out an output array of 2 to hold min/max of height
+     */
+    getHeightInterval(out) {
+        let minZ = 1.0;
+        let maxZ = -1.0;
+        for (let i = 0; i < this.numVertices; i ++) {
+            let vertex = vec3.create();
+            this.getVertex(vertex, i);
+            let currentZ = vertex[2];
+            if (currentZ > maxZ) {
+                maxZ = currentZ;
+            }
+            if (currentZ < minZ) {
+                minZ = currentZ;
+            }
+        }
+        out[0] = minZ;
+        out[1] = maxZ;
+    }
 
     /**
     * Send the buffer objects to WebGL for rendering 
@@ -195,7 +216,7 @@ class Terrain{
         this.IndexTriBuffer.numItems = this.fBuffer.length;
         console.log("Loaded ", this.IndexTriBuffer.numItems, " triangles");
     
-        //Setup Edges  
+        // Setup Edges  
         this.IndexEdgeBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.IndexEdgeBuffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.eBuffer),
@@ -372,6 +393,28 @@ class Terrain{
         }
     }
 
+    /**
+     * Prints the min/max of z coordinates to console for debugging
+     */
+    printHeightInterval(){
+        let heightInterval = vec2.create();
+        this.getHeightInterval(heightInterval);
+        console.log("Min Height: " + heightInterval[0]);
+        console.log("Max Height: " + heightInterval[1]);
+
+        let minZ = heightInterval[0];
+        let maxZ = heightInterval[1];
+        let intervalLength = Math.abs(minZ) + Math.abs(maxZ);
+        let interval_30 = intervalLength * 0.3;
+        let interval_20 = intervalLength * 0.2;
+
+        let topStartZ = maxZ - interval_20; // top color is 20 percent
+        let midStartZ = topStartZ - interval_30; // mid color is 30 percent 
+        let baseStartZ = midStartZ - interval_30; // base color is 30 percent
+        let botStartZ = minZ;
+
+        console.log("intervals: topStartZ->" + topStartZ + ", midStartZ->" + midStartZ + ", baseStartZ->" + baseStartZ + ", botStartZ->" + botStartZ);
+    }
     /**
      * Generates line values from faces in faceArray
      * to enable wireframe rendering
