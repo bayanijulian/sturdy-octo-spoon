@@ -289,7 +289,7 @@ function setLightUniforms(loc,a,d,s) {
  * Populate buffers with data
  */
 function setupBuffers() {
-    myTerrain = new Terrain(10,-0.5,0.5,-0.5,0.5);
+    myTerrain = new Terrain(64,-0.5,0.5,-0.5,0.5);
     myTerrain.loadBuffers();
 }
 

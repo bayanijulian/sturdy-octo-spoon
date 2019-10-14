@@ -260,7 +260,7 @@ class Terrain{
 
                 this.nBuffer.push(0);
                 this.nBuffer.push(0);//sample points uniform from unit circle?
-                this.nBuffer.push(1);
+                this.nBuffer.push(0);
             }
         }
         for(var i = 0; i < this.div; i++) {
@@ -280,8 +280,8 @@ class Terrain{
         //
         this.numVertices = this.vBuffer.length/3;
         this.numFaces = this.fBuffer.length/3;
-        this.setHeightsByPartition(1000, 0.005);
-        //this.generateNormals();
+        this.setHeightsByPartition(100, 0.005);
+        this.generateNormals();
     }
 
     /**
@@ -299,8 +299,9 @@ class Terrain{
 
             let v3_minus_v1 = vec3.create();
             vec3.subtract(v3_minus_v1, v3, v1);
-            let n = vec3.dot(v2_minus_v1, v3_minus_v1);
-            let nVec = vec3.fromValues(n, n, n);
+            let n = vec3.create();
+            vec3.cross(n, v2_minus_v1, v3_minus_v1);
+           
             
             let n1 = vec3.create();
             let n2 = vec3.create();
@@ -310,9 +311,9 @@ class Terrain{
             vec3.add(n2, n2, n2);
             vec3.add(n3, n3, n2);
 
-            vec3.add(n1, n1, nVec);
-            vec3.add(n2, n2, nVec);
-            vec3.add(n3, n3, nVec);
+            vec3.add(n1, n1, n);
+            vec3.add(n2, n2, n);
+            vec3.add(n3, n3, n);
 
             this.setNormalsByFaceIndex(n1, n2, n3, i);
         }
