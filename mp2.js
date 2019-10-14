@@ -218,9 +218,12 @@ function loadShaderFromDOM(id) {
  * Setup the fragment and vertex shaders
  */
 function setupShaders() {
-  vertexShader = loadShaderFromDOM("shader-vs");
-  fragmentShader = loadShaderFromDOM("shader-fs");
+  vertexShader = loadShaderFromDOM("shader-phong-phong-vs");
+  fragmentShader = loadShaderFromDOM("shader-phong-phong-fs");
   
+  // vertexShader = loadShaderFromDOM("shader-vs");
+  // fragmentShader = loadShaderFromDOM("shader-fs");
+
   shaderProgram = gl.createProgram();
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);

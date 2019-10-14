@@ -108,11 +108,11 @@ class Terrain{
     }
 
     /**
-     * Returns the 3 vertices of the triangle for the face by the face index
+     * Returns the 3 vertices of the triangle for the face
      * @param {Object} v1 output array of length 3 for vertex position v1
-     * @param {*} v2 output array of length 3 for vertex position v2
-     * @param {*} v3 output array of length 3 for vertex position v3
-     * @param {*} i the index of the face
+     * @param {Object} v2 output array of length 3 for vertex position v2
+     * @param {Object} v3 output array of length 3 for vertex position v3
+     * @param {number} i the index of the face
      */
     getVerticesByFaceIndex(v1, v2, v3, i) {
         let vertexIndices = vec3.create();
@@ -120,6 +120,36 @@ class Terrain{
         this.getVertex(v1, vertexIndices[0]);
         this.getVertex(v2, vertexIndices[1]);
         this.getVertex(v3, vertexIndices[2]);
+    }
+
+    /**
+     * Returns the 3 normals for each vertex of the triangle for the face
+     * @param {Object} n1 output array of length 3 for vertex normal v1
+     * @param {Object} n2 output array of length 3 for vertex normal v2
+     * @param {Object} n3 output array of length 3 for vertex normal v3
+     * @param {number} i the index of the face
+     */
+    getNormalsByFaceIndex(n1, n2, n3, i) {
+        let vertexIndices = vec3.create();
+        this.getVertexIndicesByFaceIndex(vertexIndices, i);
+        this.getNormal(n1, vertexIndices[0]);
+        this.getNormal(n2, vertexIndices[1]);
+        this.getNormal(n3, vertexIndices[2]);
+    }
+
+    /**
+     * Sets the 3 normals for each vertex of the triangle for the face
+     * @param {Object} n1 an array of length 3 for vertex normal v1
+     * @param {Object} n2 an array of length 3 for vertex normal v2
+     * @param {Object} n3 an array of length 3 for vertex normal v3
+     * @param {number} i the index of the face
+     */
+    setNormalsByFaceIndex(n1, n2, n3, i) {
+        let vertexIndices = vec3.create();
+        this.getVertexIndicesByFaceIndex(vertexIndices, i);
+        this.setNormal(n1, vertexIndices[0]);
+        this.setNormal(n2, vertexIndices[1]);
+        this.setNormal(n3, vertexIndices[2]);
     }
 
     /**
@@ -270,7 +300,27 @@ class Terrain{
             let v3_minus_v1 = vec3.create();
             vec3.subtract(v3_minus_v1, v3, v1);
             let n = vec3.dot(v2_minus_v1, v3_minus_v1);
+            let nVec = vec3.fromValues(n, n, n);
             
+            let n1 = vec3.create();
+            let n2 = vec3.create();
+            let n3 = vec3.create();
+            this.getNormalsByFaceIndex(n1, n2, n3, i);
+            vec3.add(n1, n1, n1);
+            vec3.add(n2, n2, n2);
+            vec3.add(n3, n3, n2);
+
+            vec3.add(n1, n1, nVec);
+            vec3.add(n2, n2, nVec);
+            vec3.add(n3, n3, nVec);
+
+            this.setNormalsByFaceIndex(n1, n2, n3, i);
+        }
+        for (var i = 0; i < this.numVertices; i++) {
+            let n = vec3.create();
+            this.getNormal(n, i);
+            vec3.normalize(n, n);
+            this.setNormal(n, i);
         }
     }
     /**
