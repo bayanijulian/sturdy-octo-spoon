@@ -44,38 +44,94 @@ class Terrain{
     }
     
     /**
-    * Set the x,y,z coords of a vertex at location(i,j)
-    * @param {Object} v an an array of length 3 holding x,y,z coordinates
-    * @param {number} i the ith row of vertices
-    * @param {number} j the jth column of vertices
+    * Set the x,y,z coordinates of an indexed vertex
+    * @param {Object} v an array of length 3 holding x,y,z coordinates
+    * @param {number} i the index of the vertex
     */
-    setVertex(v,i,j)
+    setVertex(v,i)
     {
-        var vid = 3*(i*(this.div+1) + j);
+        var vid = i*3;
         this.vBuffer[vid] = v[0];
         this.vBuffer[vid + 1] = v[1];
         this.vBuffer[vid + 2] = v[2];
     }
     
     /**
-    * Return the x,y,z coordinates of a vertex at location (i,j)
-    * @param {Object} v an an array of length 3 holding x,y,z coordinates
-    * @param {number} i the ith row of vertices
-    * @param {number} j the jth column of vertices
+    * Return the x,y,z coordinates of an indexed vertex
+    * @param {Object} v output array of length 3 holding x,y,z coordinates
+    * @param {number} i the index of the vertex
     */
-    getVertex(v,i,j)
+    getVertex(v,i)
     {
-        var vid = 3*(i*(this.div+1) + j);
+        var vid = i*3;
         v[0] = this.vBuffer[vid];
         v[1] = this.vBuffer[vid + 1];
         v[2] = this.vBuffer[vid + 2];
     }
     
-    offsetHeight(amount, i, j) {
-        let originalVec = vec3.create()
-        this.getVertex(originalVec, i, j);
-        originalVec[2] += amount;
-        this.setVertex(originalVec, i, j);
+    /**
+    * Set the x,y,z coordinates of a normal
+    * @param {Object} n an array of length 3 holding x,y,z coordinates
+    * @param {number} i the index of the normal
+    */
+    setNormal(n,i)
+    {
+        var nid = i*3;
+        this.nBuffer[nid] = n[0];
+        this.nBuffer[nid + 1] = n[1];
+        this.nBuffer[nid + 2] = n[2];
+    }
+   
+   /**
+   * Return the x,y,z coordinates of a normal
+   * @param {Object} n output array of length 3 holding x,y,z coordinates
+   * @param {number} i the index of the normal
+   */
+    getNormal(n,i)
+    {
+        var nid = i*3;
+        n[0] = this.nBuffer[nid];
+        n[1] = this.nBuffer[nid + 1];
+        n[2] = this.nBuffer[nid + 2];
+    }
+
+    /**
+     * Returns the vertex indices of the triangle for the face
+     * @param {Object} out output array of length 3 holding the triangle vertex indices
+     * @param {number} i the index of the face
+     */
+    getVertexIndicesByFaceIndex(out, i) {
+        var fid = i*3;
+        out[0] = this.fBuffer[fid];
+        out[1] = this.fBuffer[fid+1];
+        out[2] = this.fBuffer[fid+2];
+    }
+
+    /**
+     * Returns the 3 vertices of the triangle for the face by the face index
+     * @param {Object} v1 output array of length 3 for vertex position v1
+     * @param {*} v2 output array of length 3 for vertex position v2
+     * @param {*} v3 output array of length 3 for vertex position v3
+     * @param {*} i the index of the face
+     */
+    getVerticesByFaceIndex(v1, v2, v3, i) {
+        let vertexIndices = vec3.create();
+        this.getVertexIndicesByFaceIndex(vertexIndices, i);
+        this.getVertex(v1, vertexIndices[0]);
+        this.getVertex(v2, vertexIndices[1]);
+        this.getVertex(v3, vertexIndices[2]);
+    }
+
+    /**
+     * Offsets the vertex height at the index specified by a delta amount 
+     * @param {number} delta offset the height of the vertex
+     * @param {number} i the index of the vertex
+     */
+    offsetHeight(delta, i) {
+        let pos = vec3.create()
+        this.getVertex(pos, i);
+        pos[2] += delta;
+        this.setVertex(pos, i);
     }
 
     /**
@@ -85,7 +141,7 @@ class Terrain{
     {
         // Specify the vertex coordinates
         this.VertexPositionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);      
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vBuffer), gl.STATIC_DRAW);
         this.VertexPositionBuffer.itemSize = 3;
         this.VertexPositionBuffer.numItems = this.numVertices;
@@ -158,6 +214,7 @@ class Terrain{
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.IndexEdgeBuffer);
         gl.drawElements(gl.LINES, this.IndexEdgeBuffer.numItems, gl.UNSIGNED_INT,0);   
     }
+
     /**
      * Fill the vertex and buffer arrays 
      */    
@@ -197,57 +254,23 @@ class Terrain{
         //this.generateNormals();
     }
 
+    /**
+     * Computes per vertex normals on the mesh
+     */
     generateNormals() {
         for(var i=0;i<this.numFaces;i++) {
-            let v1Index = this.fBuffer[i*3];
-            let v2Index = this.fBuffer[i*3 + 1];
-            let v3Index = this.fBuffer[i*3 + 2];
-            let v1X = this.vBuffer[v1Index*3];
-            let v1Y = this.vBuffer[v1Index*3 + 1];
-            let v1Z = this.vBuffer[v1Index*3+2];
-            let v1 = vec3.fromValues(v1X, v1Y, v1Z);
+            let v1 = vec3.create();
+            let v2 = vec3.create();
+            let v3 = vec3.create();
+            this.getVerticesByFaceIndex(v1, v2, v3, i);
 
-            let v2X = this.vBuffer[v2Index*3];
-            let v2Y = this.vBuffer[v2Index*3 + 1];
-            let v2Z = this.vBuffer[v2Index*3+2];
-            let v2 = vec3.fromValues(v2X, v2Y, v2Z);
+            let v2_minus_v1 = vec3.create();
+            vec3.subtract(v2_minus_v1, v2, v1);
 
-            let v3X = this.vBuffer[v3Index*3];
-            let v3Y = this.vBuffer[v3Index*3 + 1];
-            let v3Z = this.vBuffer[v3Index*3+2];
-            let v3 = vec3.fromValues(v3X, v3Y, v3Z);
-
-            let outA = vec3.create();
-            let outB = vec3.create();
-            vec3.subtract(outA, v2, v1);
-            vec3.subtract(outB, v3, v1);
-            let N = vec3.dot(outA, outB);
-            this.nBuffer[v1Index*3] += this.nBuffer[v1Index*3] + N;
-            this.nBuffer[v1Index*3 + 1] += this.nBuffer[v1Index*3 + 1] + N;
-            this.nBuffer[v1Index*3 + 2] += this.nBuffer[v1Index*3 + 2] + N;
-            let n1 = vec3.fromValues(this.nBuffer[v1Index*3], this.nBuffer[v1Index*3 + 1], this.nBuffer[v1Index*3 + 2]);
-            vec3.normalize(n1, n1);
-            this.nBuffer[v1Index*3] = n1[0];
-            this.nBuffer[v1Index*3 + 1] = n1[1];
-            this.nBuffer[v1Index*3 + 2] = n1[2];
-
-            this.nBuffer[v2Index*3] += this.nBuffer[v2Index*3] + N;
-            this.nBuffer[v2Index*3 + 1] += this.nBuffer[v2Index*3 + 1] + N;
-            this.nBuffer[v2Index*3 + 2] += this.nBuffer[v2Index*3 + 2] + N;
-            let n2 = vec3.fromValues(this.nBuffer[v2Index*3], this.nBuffer[v2Index*3 + 1], this.nBuffer[v2Index*3 + 2]);
-            vec3.normalize(n2, n2);
-            this.nBuffer[v2Index*3] = n2[0];
-            this.nBuffer[v2Index*3 + 1] = n2[1];
-            this.nBuffer[v2Index*3 + 2] = n2[2];
-
-            this.nBuffer[v3Index*3] += this.nBuffer[v3Index*3] + N;
-            this.nBuffer[v3Index*3 + 1] += this.nBuffer[v3Index*3 + 1] + N;
-            this.nBuffer[v3Index*3 + 2] += this.nBuffer[v3Index*3 + 2] + N;
-            let n3 = vec3.fromValues(this.nBuffer[v3Index*3], this.nBuffer[v3Index*3 + 1], this.nBuffer[v3Index*3 + 2]);
-            vec3.normalize(n3, n3);
-            this.nBuffer[v3Index*3] = n3[0];
-            this.nBuffer[v3Index*3 + 1] = n3[1];
-            this.nBuffer[v3Index*3 + 2] = n3[2];
+            let v3_minus_v1 = vec3.create();
+            vec3.subtract(v3_minus_v1, v3, v1);
+            let n = vec3.dot(v2_minus_v1, v3_minus_v1);
+            
         }
     }
     /**
@@ -268,19 +291,16 @@ class Terrain{
         let randomRadian = Math.random() * Math.PI*2;
         let n = vec3.fromValues(Math.cos(randomRadian), Math.sin(randomRadian), 0);
         //console.log(n);
-        for(let i = 0; i <= this.div; i++) {
-            for (let j = 0; j <= this.div; j++) {
-                let b = vec3.create();
-                this.getVertex(b, i, j);
-                vec3.subtract(b, b, p);
-                //console.log(b);
-                let signTest = vec3.dot(b, n);
-                if(signTest > 0) {
-                    this.offsetHeight(delta, i, j);
-                } else {
-                    this.offsetHeight(-1*delta, i, j);
-                }
-
+        for(let i = 0; i < this.numVertices; i++) {
+            let b = vec3.create();
+            this.getVertex(b, i);
+            vec3.subtract(b, b, p);
+            //console.log(b);
+            let signTest = vec3.dot(b, n);
+            if(signTest > 0) {
+                this.offsetHeight(delta, i);
+            } else {
+                this.offsetHeight(-1*delta, i);
             }
         }
         this.setHeightsByPartition(N-1, delta);
