@@ -266,7 +266,7 @@ class Terrain{
         for(var i = 0; i < this.div; i++) {
             for (var j = 0; j < this.div; j++) {
                 var vid = i*(this.div+1) +j;
-                console.log(vid);
+                //console.log(vid);
                 this.fBuffer.push(vid);
                 this.fBuffer.push(vid + 1);
                 this.fBuffer.push(vid + this.div + 1);

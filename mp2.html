@@ -73,71 +73,93 @@
     </script>
      
  <script id="shader-phong-phong-vs" type="x-shader/x-vertex">
-   attribute vec3 aVertexNormal;
-   attribute vec3 aVertexPosition;
- 
-   varying vec3 vNormal;
-   varying vec3 vPosition;
- 
-   uniform mat4 uMVMatrix;
-   uniform mat4 uPMatrix;
-   uniform mat3 uNMatrix;
-   
- 
-   void main(void) {
-     // Get the vertex position in eye coordinates
-     vec4 vertexPositionEye4 = uMVMatrix * vec4(aVertexPosition, 1.0);
-     vPosition = vertexPositionEye4.xyz / vertexPositionEye4.w;
- 
-     // Calculate the normal
-     vNormal = normalize(uNMatrix * aVertexNormal);
-     
-      gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
-   }
+    attribute vec3 aVertexNormal;
+    attribute vec3 aVertexPosition;
+
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    varying vec3 colorByHeight;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+
+
+    void main(void) {
+        // Get the vertex position in eye coordinates
+        vec4 vertexPositionEye4 = uMVMatrix * vec4(aVertexPosition, 1.0);
+        vPosition = vertexPositionEye4.xyz / vertexPositionEye4.w;
+
+        // Calculate the normal
+        vNormal = normalize(uNMatrix * aVertexNormal);
+        
+        
+        // Calculates the color based on height
+        if (aVertexPosition.z > 0.05) {
+            // snow color
+            colorByHeight = vec3(255.0/255.0, 250.0/255.0, 250.0/255.0); 
+        } else if (aVertexPosition.z > -0.05){
+            // earth tone brown
+            colorByHeight = vec3(135.0/255.0, 67.0/255.0, 23.0/255.0);
+        } else if (aVertexPosition.z > -0.1) {
+            // green vegetation color
+            colorByHeight = vec3(44.0/255.0, 176.0/255.0, 55.0/255.0);
+        } else {
+            // ocean blue waters
+            colorByHeight = vec3(0.0/255.0, 151.0/255.0, 241.0/255.0);
+        }
+
+        gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
+    }
  </script>
      
  <script id="shader-phong-phong-fs" type="x-shader/x-fragment">
-   precision mediump float;
-   varying vec3 vNormal;
-   varying vec3 vPosition;
- 
-   uniform vec3 uLightPosition;
-   uniform vec3 uAmbientLightColor;
-   uniform vec3 uDiffuseLightColor;
-   uniform vec3 uSpecularLightColor;
+    precision mediump float;
+    varying vec3 vNormal;
+    varying vec3 vPosition;
+    varying vec3 colorByHeight;
 
-   uniform vec3 uKAmbient;
-   uniform vec3 uKDiffuse;
-   uniform vec3 uKSpecular;
- 
-   uniform float uShininess;
- 
-   void main(void) {
-     // Calculate the vector (l) to the light source
-     vec3 vectorToLightSource = normalize(uLightPosition - vPosition);
-     vec3 normalEye = normalize(vNormal);
- 
-     // Calculate n dot l for diffuse lighting
-     float diffuseLightWeightning = max(dot(normalEye, 
-                                     vectorToLightSource), 0.0);
- 
-     // Calculate the reflection vector (r) that is needed for specular light
-     vec3 reflectionVector = normalize(reflect(-vectorToLightSource, normalEye));
- 
-     // The camera in eye coordinates is located in the origin and is pointing
-     // along the negative z-axis. Calculate viewVector (v) 
-     // in eye coordinates as:
-     // (0.0, 0.0, 0.0) - vertexPositionEye3
-     vec3 viewVectorEye = -normalize(vPosition);
-     
-     float rdotv = max(dot(reflectionVector, viewVectorEye), 0.0);
-     float specularLightWeightning = pow(rdotv, uShininess);
- 
-     // Sum up all three reflection components and send to the fragment shader
-     gl_FragColor =  vec4(((uAmbientLightColor*uKAmbient)
-                + (uDiffuseLightColor*uKDiffuse) * diffuseLightWeightning
+    uniform vec3 uLightPosition;
+    uniform vec3 uAmbientLightColor;
+    uniform vec3 uDiffuseLightColor;
+    uniform vec3 uSpecularLightColor;
+
+    uniform vec3 uKAmbient;
+    uniform vec3 uKDiffuse;
+    uniform vec3 uKSpecular;
+
+    uniform float uShininess;
+
+    void main(void) {
+        // Calculate the vector (l) to the light source
+        vec3 vectorToLightSource = normalize(uLightPosition - vPosition);
+        vec3 normalEye = normalize(vNormal);
+
+        // Calculate n dot l for diffuse lighting
+        float diffuseLightWeightning = max(dot(normalEye, 
+                                        vectorToLightSource), 0.0);
+
+        // Calculate the reflection vector (r) that is needed for specular light
+        vec3 reflectionVector = normalize(reflect(-vectorToLightSource, normalEye));
+
+        // The camera in eye coordinates is located in the origin and is pointing
+        // along the negative z-axis. Calculate viewVector (v) 
+        // in eye coordinates as:
+        // (0.0, 0.0, 0.0) - vertexPositionEye3
+        vec3 viewVectorEye = -normalize(vPosition);
+        
+        float rdotv = max(dot(reflectionVector, viewVectorEye), 0.0);
+        float specularLightWeightning = pow(rdotv, uShininess);
+
+        // Sum up all three reflection components and send to the fragment shader
+        //gl_FragColor =  vec4(((uAmbientLightColor*uKAmbient)
+          //      + (uDiffuseLightColor*uKDiffuse) * diffuseLightWeightning
+            //    + ((uSpecularLightColor*uKSpecular) * specularLightWeightning)),1.0);
+        // uses color by height
+        gl_FragColor =  vec4(((uAmbientLightColor*uKAmbient)
+                + (uDiffuseLightColor*colorByHeight) * diffuseLightWeightning
                 + ((uSpecularLightColor*uKSpecular) * specularLightWeightning)),1.0);
-   }
+    }
  </script>
 
 <script src="gl-matrix-min.js"></script> 
