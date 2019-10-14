@@ -314,14 +314,10 @@ class Terrain{
             vec3.add(n1, n1, n);
             vec3.add(n2, n2, n);
             vec3.add(n3, n3, n);
-
+            vec3.normalize(n1, n1);
+            vec3.normalize(n2, n2);
+            vec3.normalize(n3, n3);
             this.setNormalsByFaceIndex(n1, n2, n3, i);
-        }
-        for (var i = 0; i < this.numVertices; i++) {
-            let n = vec3.create();
-            this.getNormal(n, i);
-            vec3.normalize(n, n);
-            this.setNormal(n, i);
         }
     }
     /**
