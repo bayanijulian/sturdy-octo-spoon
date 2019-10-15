@@ -301,7 +301,7 @@ class Terrain{
         //
         this.numVertices = this.vBuffer.length/3;
         this.numFaces = this.fBuffer.length/3;
-        this.setHeightsByPartition(100, 0.005);
+        this.setHeightsByPartition(150, 0.005);
         this.generateNormals();
     }
 
@@ -353,10 +353,10 @@ class Terrain{
         if (N == 0) {
             return;
         }
-        let randomX = Math.random() * (this.maxX - this.minX) + this.minX;
-        let randomY = Math.random() * (this.maxY - this.minY) + this.minY;
+        let randomX = Math.seededRandom() * (this.maxX - this.minX) + this.minX;
+        let randomY = Math.seededRandom() * (this.maxY - this.minY) + this.minY;
         let p = vec3.fromValues(randomX, randomY, 0);
-        let randomRadian = Math.random() * Math.PI*2;
+        let randomRadian = Math.seededRandom() * Math.PI*2;
         let n = vec3.fromValues(Math.cos(randomRadian), Math.sin(randomRadian), 0);
         //console.log(n);
         for(let i = 0; i < this.numVertices; i++) {
@@ -373,6 +373,8 @@ class Terrain{
         }
         this.setHeightsByPartition(N-1, delta);
     }
+
+    
 
     /**
      * Print vertices and triangles to console for debugging
@@ -415,6 +417,7 @@ class Terrain{
 
         console.log("intervals: topStartZ->" + topStartZ + ", midStartZ->" + midStartZ + ", baseStartZ->" + baseStartZ + ", botStartZ->" + botStartZ);
     }
+    
     /**
      * Generates line values from faces in faceArray
      * to enable wireframe rendering
@@ -433,4 +436,27 @@ class Terrain{
             this.eBuffer.push(this.fBuffer[fid]);
         }
     }
+}
+
+
+
+
+
+
+
+
+/**
+ * Psuedo Random Number Generator Based on a seed to reproduce random results
+ * Source: http://indiegamr.com/generate-repeatable-random-numbers-in-js/
+ */
+Math.seededRandom = function() { 
+    if (Math.seed == undefined) {
+        // Initial Seed to be used in the Psuedo Random Number Generator for Math.seededRandom
+        // let randomSeed = Math.floor(Math.random() * 999999);
+        // console.log("using seed: " + randomSeed);
+        Math.seed = 71335;
+    }
+    Math.seed = (Math.seed * 9301 + 49297) % 233280;
+    var rnd = Math.seed / 233280;
+    return rnd;
 }

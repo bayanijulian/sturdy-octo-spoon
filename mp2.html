@@ -170,28 +170,11 @@
 <script src="mp2.js"></script>   
 <body onload="startup();">
  <canvas id="myGLCanvas" width="800" height="800"></canvas>
-    <form id="input_form">
+    <form>
         <fieldset>
             <legend>Rendering Parameters</legend>
-         <input type="radio" name="primitive" id="wireframe" value="wireframe"> Wireframe
-         <input type="radio" name="primitive" id="polygon" id="polygon" value="polygon" checked> Polygon
-         <input type="radio" name="primitive" id="wirepoly" value="wirepoly" > Polygon with Edges  
-        </fieldset>
-    </form>
-    <form id="camera_position_input_form">
-        <fieldset>
-            <legend>Camera Position Parameters</legend>
-         <input type="range" id="cameraXPos" value="0" min = "-1" max = "1" step="0.1"> X
-         <input type="range" id="cameraYPos" value="0" min = "-1" max = "1" step="0.1"> Y
-         <input type="range" id="cameraZPos" value="0" min = "-1" max = "1" step="0.1"> Z
-        </fieldset>
-    </form>
-    <form id="camera_direction_input_form">
-        <fieldset>
-            <legend>Camera Direction Parameters</legend>
-         <input type="range" id="xDir" value="0" min = "-1" max = "1" step="0.1"> X
-         <input type="range" id="yDir" value="0" min = "-1" max = "1" step="0.1"> Y
-         <input type="range" id="zDir" value="0" min = "-1" max = "1" step="0.1"> Z  
+         <input type="radio" name="renderType" id="wireframe" value="wireframe"> Wireframe
+         <input type="radio" name="renderType" id="polygon" id="polygon" value="polygon" checked> Polygon
         </fieldset>
     </form>
 </body>

@@ -22,31 +22,28 @@ var pMatrix = mat4.create();
 /** @global The Normal matrix */
 var nMatrix = mat3.create();
 
-/** @global The matrix stack for hierarchical modeling */
-var mvMatrixStack = [];
-
-/** @global The angle of rotation around the y axis */
-var viewRot = 10;
-
-/** @global A glmatrix vector to use for transformations */
-var transformVec = vec3.create();    
-
-// Initialize the vector....
-vec3.set(transformVec,0.0,0.0,-2.0);
-
 /** @global An object holding the geometry for a 3D terrain */
 var myTerrain;
 
+/** @global The angle of rotation around the x axis for the terrain */
+var viewRotX = -75;
+
+/** @global The angle of rotation around the y axis for the terrain */
+var viewRotY = 0;
+
+/** @global The uniform scale factor for the terrain */
+var viewScale = 0.9;
+
+/** @global The offset factor for the Z coordinate of the terrain */
+var viewOffsetZ = -0.01;
 
 // View parameters
 /** @global Location of the camera in world coordinates */
-var eyePt = vec3.fromValues(0.0,0.0,0.0);
-/** @global Direction of the view in world coordinates */
-var viewDir = vec3.fromValues(0.0,0.0,-1.0);
+var eyePt = vec3.fromValues(0.0,0.05,1.0);
 /** @global Up vector for view matrix creation, in world coordinates */
 var up = vec3.fromValues(0.0,1.0,0.0);
 /** @global Location of a point along viewDir in world coordinates */
-var viewPt = vec3.fromValues(0.0,0.0,0.0);
+var viewPt = vec3.fromValues(0.0,0.0,-1.0);
 
 //Light parameters
 /** @global Light position in VIEW coordinates */
@@ -100,27 +97,6 @@ function uploadNormalMatrixToShader() {
   mat3.transpose(nMatrix,nMatrix);
   mat3.invert(nMatrix,nMatrix);
   gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, nMatrix);
-}
-
-//----------------------------------------------------------------------------------
-/**
- * Pushes matrix onto modelview matrix stack
- */
-function mvPushMatrix() {
-    var copy = mat4.clone(mvMatrix);
-    mvMatrixStack.push(copy);
-}
-
-
-//----------------------------------------------------------------------------------
-/**
- * Pops matrix off of modelview matrix stack
- */
-function mvPopMatrix() {
-    if (mvMatrixStack.length == 0) {
-      throw "Invalid popMatrix!";
-    }
-    mvMatrix = mvMatrixStack.pop();
 }
 
 //----------------------------------------------------------------------------------
@@ -221,9 +197,6 @@ function setupShaders() {
   vertexShader = loadShaderFromDOM("shader-phong-phong-vs");
   fragmentShader = loadShaderFromDOM("shader-phong-phong-fs");
   
-  // vertexShader = loadShaderFromDOM("shader-vs");
-  // fragmentShader = loadShaderFromDOM("shader-fs");
-
   shaderProgram = gl.createProgram();
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
@@ -241,6 +214,7 @@ function setupShaders() {
   shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
   gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
 
+  // Color Mapping Uniforms
   shaderProgram.uniformHeightInterval= gl.getUniformLocation(shaderProgram, "uHeightInterval");
   shaderProgram.uniformTopColor = gl.getUniformLocation(shaderProgram, "uTopColor");
   shaderProgram.uniformMidColor = gl.getUniformLocation(shaderProgram, "uMidColor");
@@ -289,12 +263,13 @@ function setLightUniforms(loc,a,d,s) {
   gl.uniform3fv(shaderProgram.uniformDiffuseLightColorLoc, d);
   gl.uniform3fv(shaderProgram.uniformSpecularLightColorLoc, s);
 }
+
 //-------------------------------------------------------------------------
 /**
  * Sends the min/max z coordinate to the shader for coloring the terrain by
  * intervals.
  */
-function setHeightIntervalUniforms() {
+function setColorMapUniforms() {
   // Set the height interval
 
   let skyColor = [255.0/255.0, 250.0/255.0, 250.0/255.0];
@@ -320,76 +295,66 @@ function setHeightIntervalUniforms() {
   let topStartZ = maxZ - interval_20; // top color is 20 percent
   let midStartZ = topStartZ - interval_30; // mid color is 30 percent 
   let baseStartZ = midStartZ - interval_30; // base color is 30 percent
-  let botStartZ = minZ;
+  let botStartZ = minZ; // bot color is the rest
 
   let intervals = vec4.fromValues(topStartZ, midStartZ, baseStartZ, botStartZ);
   gl.uniform4fv(shaderProgram.uniformHeightInterval, new Float32Array(intervals));
 
 }
 
-
 //-------------------------------------------------------------------------
 /**
  * Populate buffers with data
  */
 function setupBuffers() {
-    myTerrain = new Terrain(64,-0.5,0.5,-0.5,0.5);
+    myTerrain = new Terrain(128,-0.9,0.9,-0.9,0.9);
     myTerrain.loadBuffers();
 }
 
-//----------------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 /**
  * Draw call that applies matrix transformations to model and draws model in frame
  */
 function draw() { 
-    //console.log("function draw()")
-    var transformVec = vec3.create();
-  
+
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // We'll use perspective 
+    // Perspective View
     mat4.perspective(pMatrix,degToRad(45), 
                      gl.viewportWidth / gl.viewportHeight,
                      0.1, 200.0);
 
-    // We want to look down -z, so create a lookat point in that direction    
-    vec3.add(viewPt, eyePt, viewDir);
-    // Then generate the lookat matrix and initialize the MV matrix to that view
-    mat4.lookAt(mvMatrix,eyePt,viewPt,up);    
- 
+
+    // Generate the lookat matrix and initialize the MV matrix to that view
+    mat4.lookAt(mvMatrix,eyePt,viewPt,up);
+
     //Draw Terrain
-    mvPushMatrix();
-    vec3.set(transformVec,0.0,-0.25,-2.0);
-    mat4.translate(mvMatrix, mvMatrix,transformVec);
-    mat4.rotateY(mvMatrix, mvMatrix, degToRad(viewRot));
-    mat4.rotateX(mvMatrix, mvMatrix, degToRad(-75));
+    mat4.rotateY(mvMatrix, mvMatrix, degToRad(viewRotY));
+    mat4.rotateX(mvMatrix, mvMatrix, degToRad(viewRotX));
+
+    let offsetZVec = vec3.fromValues(0.0,0.0,viewOffsetZ);
+    mat4.translate(mvMatrix, mvMatrix,offsetZVec);
+
+    let scaleVec = vec3.fromValues(viewScale, viewScale, viewScale);
+    mat4.scale(mvMatrix, mvMatrix, scaleVec);
+
     setMatrixUniforms();
     setLightUniforms(lightPosition,lAmbient,lDiffuse,lSpecular);
-    setHeightIntervalUniforms();
+    setColorMapUniforms();
     
-    if ((document.getElementById("polygon").checked) || (document.getElementById("wirepoly").checked))
+    if (document.getElementById("polygon").checked)
     { 
       setMaterialUniforms(shininess,kAmbient,kTerrainDiffuse,kSpecular); 
       myTerrain.drawTriangles();
     }
     
-    if(document.getElementById("wirepoly").checked)
-    {
-      setMaterialUniforms(shininess,kAmbient,kEdgeBlack,kSpecular);
-      myTerrain.drawEdges();
-    }
-
     if(document.getElementById("wireframe").checked)
     {
       setMaterialUniforms(shininess,kAmbient,kEdgeWhite,kSpecular);
       myTerrain.drawEdges();
     }
-    mvPopMatrix();
-
-  
 }
-
 //----------------------------------------------------------------------------------
 /**
  * Startup function called from html code to start program.
@@ -399,7 +364,7 @@ function draw() {
   gl = createGLContext(canvas);
   setupShaders();
   setupBuffers();
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearColor(178/255, 232/255, 255/255,1);
   gl.enable(gl.DEPTH_TEST);
   tick();
 }
