@@ -1,19 +1,19 @@
 /**
- * @fileoverview Terrain - A simple 3D terrain using WebGL
+ * @fileoverview Terrain - 3D Terrain Object in WebGL
  * @author Yani Julian <bjulia2@illinois.edu>  
  */
 
 /** Class implementing 3D terrain. */
-class Terrain{   
-/**
- * Initialize members of a Terrain object
- * @param {number} div Number of triangles along x axis and y axis
- * @param {number} minX Minimum X coordinate value
- * @param {number} maxX Maximum X coordinate value
- * @param {number} minY Minimum Y coordinate value
- * @param {number} maxY Maximum Y coordinate value
- */
-    constructor(div,minX,maxX,minY,maxY){
+class Terrain {
+    /**
+     * Initialize members of a Terrain object
+     * @param {number} div Number of triangles along x axis and y axis
+     * @param {number} minX Minimum X coordinate value
+     * @param {number} maxX Maximum X coordinate value
+     * @param {number} minY Minimum Y coordinate value
+     * @param {number} maxY Maximum Y coordinate value
+     */
+    constructor(div,minX,maxX,minY,maxY) {
         this.div = div;
         this.minX=minX;
         this.minY=minY;
@@ -48,8 +48,7 @@ class Terrain{
     * @param {Object} v an array of length 3 holding x,y,z coordinates
     * @param {number} i the index of the vertex
     */
-    setVertex(v,i)
-    {
+    setVertex(v,i) {
         var vid = i*3;
         this.vBuffer[vid] = v[0];
         this.vBuffer[vid + 1] = v[1];
@@ -61,8 +60,7 @@ class Terrain{
     * @param {Object} v output array of length 3 holding x,y,z coordinates
     * @param {number} i the index of the vertex
     */
-    getVertex(v,i)
-    {
+    getVertex(v,i) {
         var vid = i*3;
         v[0] = this.vBuffer[vid];
         v[1] = this.vBuffer[vid + 1];
@@ -74,8 +72,7 @@ class Terrain{
     * @param {Object} n an array of length 3 holding x,y,z coordinates
     * @param {number} i the index of the normal
     */
-    setNormal(n,i)
-    {
+    setNormal(n,i) {
         var nid = i*3;
         this.nBuffer[nid] = n[0];
         this.nBuffer[nid + 1] = n[1];
@@ -87,8 +84,7 @@ class Terrain{
    * @param {Object} n output array of length 3 holding x,y,z coordinates
    * @param {number} i the index of the normal
    */
-    getNormal(n,i)
-    {
+    getNormal(n,i) {
         var nid = i*3;
         n[0] = this.nBuffer[nid];
         n[1] = this.nBuffer[nid + 1];
@@ -188,8 +184,7 @@ class Terrain{
     /**
     * Send the buffer objects to WebGL for rendering 
     */
-    loadBuffers()
-    {
+    loadBuffers() {
         // Specify the vertex coordinates
         this.VertexPositionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);
@@ -230,7 +225,7 @@ class Terrain{
     /**
     * Render the triangles 
     */
-    drawTriangles(){
+    drawTriangles() {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);
         gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, this.VertexPositionBuffer.itemSize, 
                          gl.FLOAT, false, 0, 0);
@@ -249,8 +244,7 @@ class Terrain{
     /**
     * Render the triangle edges wireframe style 
     */
-    drawEdges(){
-    
+    drawEdges() {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);
         gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, this.VertexPositionBuffer.itemSize, 
                          gl.FLOAT, false, 0, 0);
@@ -280,14 +274,13 @@ class Terrain{
                 this.vBuffer.push(0);
 
                 this.nBuffer.push(0);
-                this.nBuffer.push(0);//sample points uniform from unit circle?
+                this.nBuffer.push(0);
                 this.nBuffer.push(0);
             }
         }
         for(var i = 0; i < this.div; i++) {
             for (var j = 0; j < this.div; j++) {
                 var vid = i*(this.div+1) +j;
-                //console.log(vid);
                 this.fBuffer.push(vid);
                 this.fBuffer.push(vid + 1);
                 this.fBuffer.push(vid + this.div + 1);
@@ -301,7 +294,7 @@ class Terrain{
         //
         this.numVertices = this.vBuffer.length/3;
         this.numFaces = this.fBuffer.length/3;
-        this.setHeightsByPartition(150, 0.005);
+        this.setHeightsByPartition(300, 0.005);
         this.generateNormals();
     }
 
@@ -335,12 +328,17 @@ class Terrain{
             vec3.add(n1, n1, n);
             vec3.add(n2, n2, n);
             vec3.add(n3, n3, n);
-            vec3.normalize(n1, n1);
-            vec3.normalize(n2, n2);
-            vec3.normalize(n3, n3);
+
             this.setNormalsByFaceIndex(n1, n2, n3, i);
         }
+        for (var i = 0; i < this.numVertices; i++) {
+            let n = vec3.create();
+            this.getNormal(n, i);
+            vec3.normalize(n, n);
+            this.setNormal(n, i);
+        }
     }
+
     /**
      * Set the vertex heights according to a slow but simple noise generating
      * algorithm. We repeatedly parition the terrain using a random cutting plane.
@@ -373,8 +371,6 @@ class Terrain{
         }
         this.setHeightsByPartition(N-1, delta);
     }
-
-    
 
     /**
      * Print vertices and triangles to console for debugging
@@ -438,13 +434,6 @@ class Terrain{
     }
 }
 
-
-
-
-
-
-
-
 /**
  * Psuedo Random Number Generator Based on a seed to reproduce random results
  * Source: http://indiegamr.com/generate-repeatable-random-numbers-in-js/
@@ -452,9 +441,10 @@ class Terrain{
 Math.seededRandom = function() { 
     if (Math.seed == undefined) {
         // Initial Seed to be used in the Psuedo Random Number Generator for Math.seededRandom
-        // let randomSeed = Math.floor(Math.random() * 999999);
-        // console.log("using seed: " + randomSeed);
-        Math.seed = 71335;
+        let randomSeed = Math.floor(Math.random() * 999999);
+        console.log("using seed: " + randomSeed);
+        Math.seed = randomSeed;
+        //Math.seed = 186435; //522277
     }
     Math.seed = (Math.seed * 9301 + 49297) % 233280;
     var rnd = Math.seed / 233280;

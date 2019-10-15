@@ -1,6 +1,7 @@
 
 /**
- * @file A simple WebGL example drawing central Illinois style terrain
+ * @file Terrain Generation in WebGL with Blinn Phong Shading and 
+ * Elevation Color Mapping
  * @author Yani Julian <bjulia2@illinois.edu>  
  */
 
@@ -42,30 +43,29 @@ var viewOffsetZ = -0.01;
 var eyePt = vec3.fromValues(0.0,0.05,1.0);
 /** @global Up vector for view matrix creation, in world coordinates */
 var up = vec3.fromValues(0.0,1.0,0.0);
-/** @global Location of a point along viewDir in world coordinates */
+/** @global Location of a point in world coordinates */
 var viewPt = vec3.fromValues(0.0,0.0,-1.0);
 
 //Light parameters
 /** @global Light position in VIEW coordinates */
-var lightPosition = [0,3,3];
-/** @global Ambient light color/intensity for Phong reflection */
+var lightPosition = [0,50,50];
+/** @global Ambient light color/intensity for Blinn Phong reflection */
 var lAmbient = [0,0,0];
-/** @global Diffuse light color/intensity for Phong reflection */
+/** @global Diffuse light color/intensity for Blinn Phong reflection */
 var lDiffuse = [1,1,1];
-/** @global Specular light color/intensity for Phong reflection */
-var lSpecular =[0,0,0];
+/** @global Specular light color/intensity for Blinn Phong reflection */
+var lSpecular =[0.75,0.75,0.75];
 
 //Material parameters
-/** @global Ambient material color/intensity for Phong reflection */
+/** @global Ambient material color/intensity for Blinn Phong reflection */
 var kAmbient = [1.0,1.0,1.0];
-/** @global Diffuse material color/intensity for Phong reflection */
+/** @global Diffuse material color/intensity for Blinn Phong reflection */
 var kTerrainDiffuse = [205.0/255.0,163.0/255.0,63.0/255.0];
-/** @global Specular material color/intensity for Phong reflection */
-var kSpecular = [0.0,0.0,0.0];
-/** @global Shininess exponent for Phong reflection */
-var shininess = 23;
-/** @global Edge color fpr wireframeish rendering */
-var kEdgeBlack = [0.0,0.0,0.0];
+/** @global Specular material color/intensity for Blinn Phong reflection */
+var kSpecular = [1,1,1];
+/** @global Shininess exponent for Blinn Phong reflection */
+var shininess = 100;
+
 /** @global Edge color for wireframe rendering */
 var kEdgeWhite = [1.0,1.0,1.0];
 
@@ -104,9 +104,9 @@ function uploadNormalMatrixToShader() {
  * Sends projection/modelview matrices to shader
  */
 function setMatrixUniforms() {
-    uploadModelViewMatrixToShader();
-    uploadNormalMatrixToShader();
-    uploadProjectionMatrixToShader();
+  uploadModelViewMatrixToShader();
+  uploadNormalMatrixToShader();
+  uploadProjectionMatrixToShader();
 }
 
 //----------------------------------------------------------------------------------
@@ -116,7 +116,7 @@ function setMatrixUniforms() {
  * @return {Number} The radians that correspond to the degree input
  */
 function degToRad(degrees) {
-        return degrees * Math.PI / 180;
+  return degrees * Math.PI / 180;
 }
 
 //----------------------------------------------------------------------------------
@@ -194,8 +194,8 @@ function loadShaderFromDOM(id) {
  * Setup the fragment and vertex shaders
  */
 function setupShaders() {
-  vertexShader = loadShaderFromDOM("shader-phong-phong-vs");
-  fragmentShader = loadShaderFromDOM("shader-phong-phong-fs");
+  vertexShader = loadShaderFromDOM("shader-blinn-phong-vs");
+  fragmentShader = loadShaderFromDOM("shader-blinn-phong-fs");
   
   shaderProgram = gl.createProgram();
   gl.attachShader(shaderProgram, vertexShader);
@@ -267,7 +267,7 @@ function setLightUniforms(loc,a,d,s) {
 //-------------------------------------------------------------------------
 /**
  * Sends the min/max z coordinate to the shader for coloring the terrain by
- * intervals.
+ * intervals. Sends each of the colors to the shader.
  */
 function setColorMapUniforms() {
   // Set the height interval
@@ -291,7 +291,7 @@ function setColorMapUniforms() {
   let intervalLength = Math.abs(minZ) + Math.abs(maxZ);
   let interval_30 = intervalLength * 0.3;
   let interval_20 = intervalLength * 0.2;
-
+  
   let topStartZ = maxZ - interval_20; // top color is 20 percent
   let midStartZ = topStartZ - interval_30; // mid color is 30 percent 
   let baseStartZ = midStartZ - interval_30; // base color is 30 percent
@@ -304,10 +304,10 @@ function setColorMapUniforms() {
 
 //-------------------------------------------------------------------------
 /**
- * Populate buffers with data
+ * Populate buffers with terrain data
  */
 function setupBuffers() {
-    myTerrain = new Terrain(128,-0.9,0.9,-0.9,0.9);
+    myTerrain = new Terrain(150,-1,1,-1,1);
     myTerrain.loadBuffers();
 }
 
@@ -323,8 +323,7 @@ function draw() {
     // Perspective View
     mat4.perspective(pMatrix,degToRad(45), 
                      gl.viewportWidth / gl.viewportHeight,
-                     0.1, 200.0);
-
+                     0.01, 1000);
 
     // Generate the lookat matrix and initialize the MV matrix to that view
     mat4.lookAt(mvMatrix,eyePt,viewPt,up);
@@ -355,6 +354,7 @@ function draw() {
       myTerrain.drawEdges();
     }
 }
+
 //----------------------------------------------------------------------------------
 /**
  * Startup function called from html code to start program.
@@ -364,7 +364,8 @@ function draw() {
   gl = createGLContext(canvas);
   setupShaders();
   setupBuffers();
-  gl.clearColor(178/255, 232/255, 255/255,1);
+  // fog color
+  gl.clearColor(220/255, 219/255, 233/255,1);
   gl.enable(gl.DEPTH_TEST);
   tick();
 }
