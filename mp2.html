@@ -91,12 +91,22 @@
             vec3 halfwayvec = normalize(vectorToLightSource + viewVectorEye);
             float ndoth = max(dot(normalEye, halfwayvec), 0.0);
             float blinnSpecularLightWeighting = pow(ndoth, uShininess);
+            
+            // fog shader code
+            float fogCoord = (gl_FragCoord.z / gl_FragCoord.w);
+            vec4 fogColor = vec4(1.0,1.0,1.0,1.0);
+
+            float LOG2 = 1.442695;
+            float fogDensity = 0.0005;
+            float fogFactor = exp2( -fogDensity * fogDensity * fogCoord * fogCoord * LOG2 );
+            fogFactor = clamp(fogFactor, 0.0, 1.0);
 
             // Sum up all three reflection components and send to the fragment shader
             // uses the color mapping by height
-            gl_FragColor =  vec4(((uAmbientLightColor*uKAmbient)
+            vec4 fragColor =  vec4(((uAmbientLightColor*uKAmbient)
                     + (uDiffuseLightColor*colorByHeight) * diffuseLightWeightning
                     + ((uSpecularLightColor*uKSpecular) * blinnSpecularLightWeighting)),1.0);
+            gl_FragColor = mix(fogColor, fragColor, fogFactor);
         }
     </script>
 
