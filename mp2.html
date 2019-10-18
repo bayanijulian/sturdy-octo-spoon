@@ -97,7 +97,7 @@
             vec4 fogColor = vec4(1.0,1.0,1.0,1.0);
 
             float LOG2 = 1.442695;
-            float fogDensity = 0.0005;
+            float fogDensity = 0.5;
             float fogFactor = exp2( -fogDensity * fogDensity * fogCoord * fogCoord * LOG2 );
             fogFactor = clamp(fogFactor, 0.0, 1.0);
 

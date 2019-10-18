@@ -111,7 +111,7 @@ class Terrain {
      * @param {number} i the index of the face
      */
     getVerticesByFaceIndex(v1, v2, v3, i) {
-        let vertexIndices = vec3.create();
+        let vertexIndices = glMatrix.vec3.create();
         this.getVertexIndicesByFaceIndex(vertexIndices, i);
         this.getVertex(v1, vertexIndices[0]);
         this.getVertex(v2, vertexIndices[1]);
@@ -126,7 +126,7 @@ class Terrain {
      * @param {number} i the index of the face
      */
     getNormalsByFaceIndex(n1, n2, n3, i) {
-        let vertexIndices = vec3.create();
+        let vertexIndices = glMatrix.vec3.create();
         this.getVertexIndicesByFaceIndex(vertexIndices, i);
         this.getNormal(n1, vertexIndices[0]);
         this.getNormal(n2, vertexIndices[1]);
@@ -141,7 +141,7 @@ class Terrain {
      * @param {number} i the index of the face
      */
     setNormalsByFaceIndex(n1, n2, n3, i) {
-        let vertexIndices = vec3.create();
+        let vertexIndices = glMatrix.vec3.create();
         this.getVertexIndicesByFaceIndex(vertexIndices, i);
         this.setNormal(n1, vertexIndices[0]);
         this.setNormal(n2, vertexIndices[1]);
@@ -154,7 +154,7 @@ class Terrain {
      * @param {number} i the index of the vertex
      */
     offsetHeight(delta, i) {
-        let pos = vec3.create()
+        let pos = glMatrix.vec3.create()
         this.getVertex(pos, i);
         pos[2] += delta;
         this.setVertex(pos, i);
@@ -167,7 +167,7 @@ class Terrain {
         let minZ = 1.0;
         let maxZ = -1.0;
         for (let i = 0; i < this.numVertices; i ++) {
-            let vertex = vec3.create();
+            let vertex = glMatrix.vec3.create();
             this.getVertex(vertex, i);
             let currentZ = vertex[2];
             if (currentZ > maxZ) {
@@ -303,38 +303,38 @@ class Terrain {
      */
     generateNormals() {
         for(var i=0;i<this.numFaces;i++) {
-            let v1 = vec3.create();
-            let v2 = vec3.create();
-            let v3 = vec3.create();
+            let v1 = glMatrix.vec3.create();
+            let v2 = glMatrix.vec3.create();
+            let v3 = glMatrix.vec3.create();
             this.getVerticesByFaceIndex(v1, v2, v3, i);
 
-            let v2_minus_v1 = vec3.create();
-            vec3.subtract(v2_minus_v1, v2, v1);
+            let v2_minus_v1 = glMatrix.vec3.create();
+            glMatrix.vec3.subtract(v2_minus_v1, v2, v1);
 
-            let v3_minus_v1 = vec3.create();
-            vec3.subtract(v3_minus_v1, v3, v1);
-            let n = vec3.create();
-            vec3.cross(n, v2_minus_v1, v3_minus_v1);
+            let v3_minus_v1 = glMatrix.vec3.create();
+            glMatrix.vec3.subtract(v3_minus_v1, v3, v1);
+            let n = glMatrix.vec3.create();
+            glMatrix.vec3.cross(n, v2_minus_v1, v3_minus_v1);
            
             
-            let n1 = vec3.create();
-            let n2 = vec3.create();
-            let n3 = vec3.create();
+            let n1 = glMatrix.vec3.create();
+            let n2 = glMatrix.vec3.create();
+            let n3 = glMatrix.vec3.create();
             this.getNormalsByFaceIndex(n1, n2, n3, i);
-            vec3.add(n1, n1, n1);
-            vec3.add(n2, n2, n2);
-            vec3.add(n3, n3, n2);
+            glMatrix.vec3.add(n1, n1, n1);
+            glMatrix.vec3.add(n2, n2, n2);
+            glMatrix.vec3.add(n3, n3, n2);
 
-            vec3.add(n1, n1, n);
-            vec3.add(n2, n2, n);
-            vec3.add(n3, n3, n);
+            glMatrix.vec3.add(n1, n1, n);
+            glMatrix.vec3.add(n2, n2, n);
+            glMatrix.vec3.add(n3, n3, n);
 
             this.setNormalsByFaceIndex(n1, n2, n3, i);
         }
         for (var i = 0; i < this.numVertices; i++) {
-            let n = vec3.create();
+            let n = glMatrix.vec3.create();
             this.getNormal(n, i);
-            vec3.normalize(n, n);
+            glMatrix.vec3.normalize(n, n);
             this.setNormal(n, i);
         }
     }
@@ -353,16 +353,16 @@ class Terrain {
         }
         let randomX = Math.seededRandom() * (this.maxX - this.minX) + this.minX;
         let randomY = Math.seededRandom() * (this.maxY - this.minY) + this.minY;
-        let p = vec3.fromValues(randomX, randomY, 0);
+        let p = glMatrix.vec3.fromValues(randomX, randomY, 0);
         let randomRadian = Math.seededRandom() * Math.PI*2;
-        let n = vec3.fromValues(Math.cos(randomRadian), Math.sin(randomRadian), 0);
+        let n = glMatrix.vec3.fromValues(Math.cos(randomRadian), Math.sin(randomRadian), 0);
         //console.log(n);
         for(let i = 0; i < this.numVertices; i++) {
-            let b = vec3.create();
+            let b = glMatrix.vec3.create();
             this.getVertex(b, i);
-            vec3.subtract(b, b, p);
+            glMatrix.vec3.subtract(b, b, p);
             //console.log(b);
-            let signTest = vec3.dot(b, n);
+            let signTest = glMatrix.vec3.dot(b, n);
             if(signTest > 0) {
                 this.offsetHeight(delta, i);
             } else {
@@ -395,7 +395,7 @@ class Terrain {
      * Prints the min/max of z coordinates to console for debugging
      */
     printHeightInterval(){
-        let heightInterval = vec2.create();
+        let heightInterval = glMatrix.vec2.create();
         this.getHeightInterval(heightInterval);
         console.log("Min Height: " + heightInterval[0]);
         console.log("Max Height: " + heightInterval[1]);

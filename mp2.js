@@ -15,19 +15,19 @@ var canvas;
 var shaderProgram;
 
 /** @global The Modelview matrix */
-var mvMatrix = mat4.create();
+var mvMatrix = glMatrix.mat4.create();
 
 /** @global The Projection matrix */
-var pMatrix = mat4.create();
+var pMatrix = glMatrix.mat4.create();
 
 /** @global The Normal matrix */
-var nMatrix = mat3.create();
+var nMatrix = glMatrix.mat3.create();
 
 /** @global An object holding the geometry for a 3D terrain */
 var myTerrain;
 
 /** @global The angle of rotation around the x axis for the terrain */
-var viewRotX = -75;
+var viewRotX = -90;
 
 /** @global The angle of rotation around the y axis for the terrain */
 var viewRotY = 0;
@@ -40,11 +40,11 @@ var viewOffsetZ = -0.01;
 
 // View parameters
 /** @global Location of the camera in world coordinates */
-var eyePt = vec3.fromValues(0.0,0.05,1.0);
+var eyePt = glMatrix.vec3.fromValues(0.0,0.05,1.0);
 /** @global Up vector for view matrix creation, in world coordinates */
-var up = vec3.fromValues(0.0,1.0,0.0);
+var up = glMatrix.vec3.fromValues(0.0,1.0,0.0);
 /** @global Location of a point in world coordinates */
-var viewPt = vec3.fromValues(0.0,0.0,-1.0);
+var viewPt = glMatrix.vec3.fromValues(0.0,0.0,-1.0);
 
 //Light parameters
 /** @global Light position in VIEW coordinates */
@@ -93,9 +93,9 @@ function uploadProjectionMatrixToShader() {
  * Generates and sends the normal matrix to the shader
  */
 function uploadNormalMatrixToShader() {
-  mat3.fromMat4(nMatrix,mvMatrix);
-  mat3.transpose(nMatrix,nMatrix);
-  mat3.invert(nMatrix,nMatrix);
+  glMatrix.mat3.fromMat4(nMatrix,mvMatrix);
+  glMatrix.mat3.transpose(nMatrix,nMatrix);
+  glMatrix.mat3.invert(nMatrix,nMatrix);
   gl.uniformMatrix3fv(shaderProgram.nMatrixUniform, false, nMatrix);
 }
 
@@ -284,7 +284,7 @@ function setColorMapUniforms() {
   let oceanColor = [0.0/255.0, 151.0/255.0, 241.0/255.0];
   gl.uniform3fv(shaderProgram.uniformBotColor, new Float32Array(oceanColor));
   
-  let heightInterval = vec2.create();
+  let heightInterval = glMatrix.vec2.create();
   myTerrain.getHeightInterval(heightInterval);
   let minZ = heightInterval[0];
   let maxZ = heightInterval[1];
@@ -297,7 +297,7 @@ function setColorMapUniforms() {
   let baseStartZ = midStartZ - interval_30; // base color is 30 percent
   let botStartZ = minZ; // bot color is the rest
 
-  let intervals = vec4.fromValues(topStartZ, midStartZ, baseStartZ, botStartZ);
+  let intervals = glMatrix.vec4.fromValues(topStartZ, midStartZ, baseStartZ, botStartZ);
   gl.uniform4fv(shaderProgram.uniformHeightInterval, new Float32Array(intervals));
 
 }
@@ -321,22 +321,22 @@ function draw() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // Perspective View
-    mat4.perspective(pMatrix,degToRad(45), 
+    glMatrix.mat4.perspective(pMatrix,degToRad(45), 
                      gl.viewportWidth / gl.viewportHeight,
                      0.01, 1000);
 
     // Generate the lookat matrix and initialize the MV matrix to that view
-    mat4.lookAt(mvMatrix,eyePt,viewPt,up);
+    glMatrix.mat4.lookAt(mvMatrix,eyePt,viewPt,up);
 
     //Draw Terrain
-    mat4.rotateY(mvMatrix, mvMatrix, degToRad(viewRotY));
-    mat4.rotateX(mvMatrix, mvMatrix, degToRad(viewRotX));
+    glMatrix.mat4.rotateY(mvMatrix, mvMatrix, degToRad(viewRotY));
+    glMatrix.mat4.rotateX(mvMatrix, mvMatrix, degToRad(viewRotX));
 
-    let offsetZVec = vec3.fromValues(0.0,0.0,viewOffsetZ);
-    mat4.translate(mvMatrix, mvMatrix,offsetZVec);
+    let offsetZVec = glMatrix.vec3.fromValues(0.0,0.0,viewOffsetZ);
+    glMatrix.mat4.translate(mvMatrix, mvMatrix,offsetZVec);
 
-    let scaleVec = vec3.fromValues(viewScale, viewScale, viewScale);
-    mat4.scale(mvMatrix, mvMatrix, scaleVec);
+    let scaleVec = glMatrix.vec3.fromValues(viewScale, viewScale, viewScale);
+    glMatrix.mat4.scale(mvMatrix, mvMatrix, scaleVec);
 
     setMatrixUniforms();
     setLightUniforms(lightPosition,lAmbient,lDiffuse,lSpecular);
@@ -365,7 +365,7 @@ function draw() {
   setupShaders();
   setupBuffers();
   // fog color
-  gl.clearColor(220/255, 219/255, 233/255,1);
+  gl.clearColor(1.0,1.0,1.0,1.0);
   gl.enable(gl.DEPTH_TEST);
   tick();
 }
@@ -377,5 +377,7 @@ function draw() {
 function tick() {
     requestAnimFrame(tick);
     draw();
+    eyePt[2] -= .001;
+    viewPt[2] -= .001;
 }
 
