@@ -33,18 +33,18 @@ var viewRotX = -90;
 var viewRotY = 0;
 
 /** @global The uniform scale factor for the terrain */
-var viewScale = 0.9;
+var viewScale = 1.0;
 
 /** @global The offset factor for the Z coordinate of the terrain */
 var viewOffsetZ = -0.01;
 
 // View parameters
 /** @global Location of the camera in world coordinates */
-var eyePt = glMatrix.vec3.fromValues(0.0,0.05,1.0);
+var eyePt = glMatrix.vec3.fromValues(0.0,0.15,1.0);
 /** @global Up vector for view matrix creation, in world coordinates */
 var up = glMatrix.vec3.fromValues(0.0,1.0,0.0);
 /** @global Location of a point in world coordinates */
-var viewPt = glMatrix.vec3.fromValues(0.0,0.0,-1.0);
+var viewPt = glMatrix.vec3.fromValues(0.0,0.1,-1.0);
 
 //Light parameters
 /** @global Light position in VIEW coordinates */
@@ -69,7 +69,16 @@ var shininess = 100;
 /** @global Edge color for wireframe rendering */
 var kEdgeWhite = [1.0,1.0,1.0];
 
+// User Interaction Parameters
 
+/** @global The camera speed */
+var speed = .001;
+
+/** @global Dictionary of which keys are currently pressed */
+var currentlyPressedKeys = {}
+
+/** @global Fog is on or off */
+var isFoggy = true;
 
 //-------------------------------------------------------------------------
 /**
@@ -355,7 +364,7 @@ function draw() {
     }
 }
 
-//----------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /**
  * Startup function called from html code to start program.
  */
@@ -367,17 +376,47 @@ function draw() {
   // fog color
   gl.clearColor(1.0,1.0,1.0,1.0);
   gl.enable(gl.DEPTH_TEST);
+
+  document.onkeydown = handleKeyDown;
+  document.onkeyup = handleKeyUp;
+
   tick();
 }
 
-//----------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /**
  * Keeping drawing frames....
  */
 function tick() {
     requestAnimFrame(tick);
     draw();
-    eyePt[2] -= .001;
-    viewPt[2] -= .001;
+    updateSpeed();
 }
 
+//------------------------------------------------------------------------------
+function handleKeyDown(event) {
+  console.log("Key Down ", event.key, " code ", event.code);
+  if (event.key == "ArrowDown" || event.key == "ArrowUp") {
+    event.preventDefault();
+  }
+  currentlyPressedKeys[event.key] = true;
+
+}
+
+
+function handleKeyUp(event) {
+  console.log("Key up ", event.key, " code ", event.code);
+  currentlyPressedKeys[event.key] = false;
+}
+
+function updateSpeed() {
+  eyePt[2] -= speed;
+  viewPt[2] -= speed;
+  if (currentlyPressedKeys["ArrowDown"]) {
+    speed -= .0001;
+    document.getElementById("speedLabel").innerText = "Speed: " + speed;
+  } else if (currentlyPressedKeys["ArrowUp"]) {
+    speed += .0001;
+    document.getElementById("speedLabel").innerText = "Speed: " + speed;
+  }
+}
